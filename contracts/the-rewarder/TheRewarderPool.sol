@@ -67,7 +67,7 @@ contract TheRewarderPool {
 
         if(isNewRewardsRound()) {
             _recordSnapshot();
-        }        
+        }
         
         uint256 totalDeposits = accToken.totalSupplyAt(lastSnapshotIdForRewards);
         uint256 amountDeposited = accToken.balanceOfAt(msg.sender, lastSnapshotIdForRewards);

