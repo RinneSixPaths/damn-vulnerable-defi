@@ -44,7 +44,7 @@ contract WETH9 {
     }
     
     function withdraw(uint wad) public {
-        require(balanceOf[msg.sender] >= wad);
+        require(balanceOf[msg.sender] >= wad, "Balance is less then a wad");
         balanceOf[msg.sender] -= wad;
         msg.sender.transfer(wad);
         emit Withdrawal(msg.sender, wad);
